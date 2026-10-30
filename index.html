@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f2f7f3">
+<title>ISES · Central de Escritos — Calculadora de ajustes de factura</title>
+<meta name="description" content="Calcule el ajuste adicional de su factura de energía: meta del ciclo, límite del 110 %, excedente y cargo estimado, explicado paso a paso.">
+<link rel="icon" href="assets/img/logo-central-de-escritos-ises.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+  /* Tema antes del render para evitar destello */
+  (function () {
+    try {
+      var stored = localStorage.getItem('ises-theme');
+      var dark = stored ? stored === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    } catch (e) { document.documentElement.dataset.theme = 'light'; }
+    document.documentElement.classList.add('js');
+  })();
+</script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ===================== NAVEGACIÓN ===================== -->
+<nav class="nav" id="nav">
+  <div class="nav__inner">
+    <a href="#inicio" class="brand" aria-label="ISES Central de Escritos, inicio">
+      <span class="brandmark" role="img" aria-label="ISES"></span>
+      <span class="brand__name">ISES</span>
+      <span class="brand__divider" aria-hidden="true"></span>
+      <span class="brand__sub">Central de Escritos</span>
+    </a>
+
+    <div class="nav__links">
+      <a class="nav__link" href="#calculadora">Calculadora</a>
+      <a class="nav__link" href="#como">Cómo funciona</a>
+      <a class="nav__link" href="#tarifas">Subsidio y contribución</a>
+    </div>
+
+    <div class="nav__actions">
+      <button class="btn btn--ghost btn--icon" id="theme" type="button" aria-label="Cambiar tema" title="Cambiar tema"><i data-lucide="moon"></i></button>
+      <a class="btn btn--primary btn--sm nav__cta" href="#calculadora" aria-label="Calcular ajuste"><i data-lucide="calculator"></i><span class="nav__cta-label">Calcular ajuste</span></a>
+      <button class="btn btn--ghost btn--icon nav__toggle" id="navToggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="navPanel"><i data-lucide="menu"></i></button>
+    </div>
+  </div>
+  <div class="nav__panel" id="navPanel">
+    <a href="#calculadora">Calculadora</a>
+    <a href="#como">Cómo funciona</a>
+    <a href="#tarifas">Subsidio y contribución</a>
+    <a href="#usuarios">Perfiles</a>
+    <a class="btn btn--primary nav__cta-panel" href="#calculadora"><i data-lucide="calculator"></i>Calcular ajuste</a>
+  </div>
+</nav>
+
+<!-- ===================== HERO ===================== -->
+<header class="hero" id="inicio">
+  <span class="hero__glow" aria-hidden="true"></span>
+  <div class="wrap hero__grid">
+    <div>
+      <p class="eyebrow" data-reveal>Ajuste de factura · Energía</p>
+      <h1 class="h1" data-reveal>El ajuste de consumo excedente, en números claros.</h1>
+      <p class="lead" data-reveal>Ingrese los datos del ciclo y obtenga en segundos el cargo adicional, la explicación paso a paso y un resumen listo para su reclamación.</p>
+      <div class="hero__cta" data-reveal>
+        <a href="#calculadora" class="btn btn--primary"><i data-lucide="calculator"></i>Calcular mi ajuste</a>
+        <a href="#como" class="btn btn--ghost"><i data-lucide="git-branch"></i>Ver cómo funciona</a>
+      </div>
+      <div class="trust" data-reveal>
+        <span class="trust__item"><i data-lucide="shield-check"></i>Metodología del límite del 110 %</span>
+        <span class="trust__item"><i data-lucide="wifi-off"></i>Cálculo local, sin enviar datos</span>
+        <span class="trust__item"><i data-lucide="layers"></i>Subsidio y contribución por estrato</span>
+      </div>
+    </div>
+
+    <div class="meter-card" data-reveal>
+      <div class="meter-card__top">
+        <span class="meter-card__label">Su ajuste ahora mismo</span>
+        <span class="chip" id="heroState"><i data-lucide="minus"></i>Sin datos</span>
+      </div>
+      <p class="amount" id="heroAmount">$ 0</p>
+
+      <div class="meter">
+        <div class="meter__head">
+          <span>Consumo del ciclo</span>
+          <span class="mono" data-b="consumoHero">0 kWh</span>
+        </div>
+        <div class="meter__track">
+          <div class="meter__fill" id="heroFill"></div>
+          <div class="meter__mark" id="heroMark" style="left:0"></div>
+        </div>
+        <div class="meter__foot">
+          <span>0</span>
+          <span>Límite 110 %: <b class="mono" data-b="lim">—</b></span>
+        </div>
+      </div>
+
+      <div class="mini">
+        <div class="mini__item">
+          <p class="mini__label">Excedente</p>
+          <p class="mini__value" data-b="exc">—</p>
+        </div>
+        <div class="mini__item">
+          <p class="mini__label">Meta del ciclo</p>
+          <p class="mini__value" data-b="mc">—</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ===================== CALCULADORA ===================== -->
+<section class="section section--alt" id="calculadora">
+  <div class="wrap">
+    <div class="section__head" data-reveal>
+      <p class="eyebrow">01 · Calculadora</p>
+      <h2 class="h2">Ingrese sus datos y vea el ajuste al instante.</h2>
+      <p class="lead">Los campos están precargados con un ejemplo. Reemplácelos por los valores de su factura.</p>
+    </div>
+
+    <div class="calc">
+      <!-- Formulario -->
+      <form class="card card--pad form-card" id="form" novalidate onsubmit="return false" data-reveal>
+        <div class="card__title"><i data-lucide="sliders-horizontal"></i>Datos de su ciclo<button type="button" class="btn btn--ghost card__title-action" id="btnAbrirTarifas" aria-label="Seleccionar meta de referencia" title="Ver metas de referencia"><i data-lucide="table"></i></button></div>
+
+        <div class="field-2">
+          <div class="field-group">
+            <label class="label" for="meta">Meta diaria (kWh)</label>
+            <input id="meta" class="field mono" inputmode="decimal" autocomplete="off" value="5,77" placeholder="Ej: 5,77">
+            <p class="hint">Toca cualquier valor de la tabla de referencia para aplicarlo a la meta diaria.</p>
+          </div>
+          <div class="field-group">
+            <label class="label" for="dias">Días del ciclo</label>
+            <input id="dias" class="field mono" inputmode="numeric" autocomplete="off" value="30" placeholder="Ej: 30">
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="label" for="consumo">Consumo facturado (kWh)</label>
+          <input id="consumo" class="field mono" inputmode="decimal" autocomplete="off" value="421,53" placeholder="Ej: 230 o 1.200">
+          <input type="range" id="consumoRange" class="range" min="0" max="500" step="1" value="421" aria-label="Ajustar consumo facturado">
+        </div>
+
+        <div class="field-group">
+          <label class="label" for="tarifa">Tarifa regulada ($/kWh)</label>
+          <input id="tarifa" class="field mono" inputmode="decimal" autocomplete="off" value="873,6862" placeholder="Ej: 873,6862">
+        </div>
+
+
+
+        <div class="field-group" id="subsidioGroup">
+          <label class="label" for="subsidio">Subsidio aplicado ($/kWh)</label>
+          <input id="subsidio" class="field mono" inputmode="decimal" autocomplete="off" value="182,1255" placeholder="Ej: 182,1255">
+          <p class="hint">Valor del subsidio que aparece en la factura. Se descuenta de la tarifa regulada <b>antes</b> de aplicar el 30 % adicional.</p>
+        </div>
+
+        <fieldset class="field-group" style="border:0;padding:0;margin:0">
+          <legend class="label">Tipo de usuario</legend>
+          <div class="seg" id="types"></div>
+        </fieldset>
+
+        <div class="form-actions">
+          <button class="btn btn--primary" type="button" onclick="calcular()"><i data-lucide="calculator"></i>Calcular ajuste</button>
+          <button class="btn btn--ghost" type="button" id="resetBtn"><i data-lucide="rotate-ccw"></i>Restablecer</button>
+        </div>
+
+        <p class="hint">El cálculo es estimado y no reemplaza su factura oficial. Se aceptan cifras como <b>5,77</b> o <b>5.77</b> y <b>1.200</b> o <b>1200</b>. Si su factura trae la meta del ciclo, divídala entre los días para obtener la meta diaria.</p>
+      </form>
+
+      <!-- Resultados -->
+      <div class="results-col">
+        <div class="card card--pad" data-reveal>
+          <div class="results-head">
+            <div class="card__title"><i data-lucide="receipt-text"></i>Resultado del ajuste</div>
+            <div class="results-head__actions no-print">
+              <button class="btn btn--ghost btn--sm" id="copy" type="button" onclick="copiarResumen()" disabled><i data-lucide="copy"></i>Copiar</button>
+              <button class="btn btn--ghost btn--sm" type="button" onclick="imprimir()" disabled id="printBtn"><i data-lucide="printer"></i>PDF</button>
+            </div>
+          </div>
+
+          <div class="error-box" id="errorBox" role="alert" style="margin-top:18px;"></div>
+
+          <div class="empty" id="resultsEmpty" style="margin-top:20px;">
+            <span class="empty__icon"><i data-lucide="calculator"></i></span>
+            <p class="empty__title">Aún no hay un cálculo</p>
+            <p class="empty__text">Complete los datos de su ciclo y presione <b>Calcular ajuste</b> para ver el desglose completo.</p>
+          </div>
+
+          <div id="resultados" class="results" hidden>
+            <div class="result" id="cobroFinal"></div>
+
+            <div>
+              <p class="breakdown__title">Cómo se llegó a este valor</p>
+              <div class="breakdown" id="flujoResultado"></div>
+            </div>
+
+            <div>
+              <p class="breakdown__title">Meta, límite y consumo</p>
+              <div class="chart" id="graficoBarras"></div>
+            </div>
+
+            <div class="panel">
+              <p class="panel__title">Resumen del cálculo</p>
+              <div id="resumenFinal"></div>
+            </div>
+
+            <div class="card card--pad">
+              <div class="card__title"><i data-lucide="list-ordered"></i>Liquidación paso a paso</div>
+              <div id="pasosDetalle"></div>
+            </div>
+
+            <div class="card card--pad">
+              <div class="card__title"><i data-lucide="scale"></i>Subsidio o contribución</div>
+              <div id="claseDetalle"></div>
+            </div>
+
+            <div class="card card--pad">
+              <div class="card__title"><i data-lucide="piggy-bank"></i>Contribución del 20 % sobre la penalización</div>
+              <div id="solidaridadDetalle"></div>
+            </div>
+
+            <div class="card card--pad">
+              <div class="card__title"><i data-lucide="sigma"></i>Penalización final</div>
+              <div id="totalDetalle"></div>
+            </div>
+
+            <div class="card card--pad">
+              <div class="card__title"><i data-lucide="lightbulb"></i>Explicación del cálculo</div>
+              <div class="explain" id="explicacion"></div>
+            </div>
+
+            <div class="callout">
+              <span class="callout__icon"><i data-lucide="alert-triangle"></i></span>
+              <div>
+                <p class="callout__title">Importante</p>
+                <p><strong>Superar la meta del ciclo no genera automáticamente un cobro adicional.</strong> El ajuste solo se aplica a la energía que supere el <strong>110 %</strong> de la meta individual del ciclo.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CÓMO FUNCIONA ===================== -->
+<section class="section" id="como">
+  <div class="wrap">
+    <div class="section__head" data-reveal>
+      <p class="eyebrow">02 · Cómo funciona</p>
+      <h2 class="h2">Cuatro pasos, con sus números reales.</h2>
+      <p class="lead">El cálculo es lineal y transparente: cada paso usa el resultado del anterior.</p>
+    </div>
+
+    <ol class="steps">
+      <li class="step" data-reveal>
+        <span class="step__num">1</span>
+        <div class="card card--pad">
+          <h3 class="step__title">Meta del ciclo</h3>
+          <p class="step__text">Multiplicamos su meta diaria por los días facturados.</p>
+          <div class="formula mono"><span data-b="meta">—</span> × <span data-b="dias">—</span> = <b data-b="mc">—</b></div>
+        </div>
+      </li>
+      <li class="step" data-reveal>
+        <span class="step__num">2</span>
+        <div class="card card--pad">
+          <h3 class="step__title">Límite del 110 %</h3>
+          <p class="step__text">Superar la meta no genera ajuste por sí solo. Solo cuenta lo que pase de este límite.</p>
+          <div class="formula mono"><span data-b="mc">—</span> × 1,10 = <b data-b="lim">—</b></div>
+        </div>
+      </li>
+      <li class="step" data-reveal>
+        <span class="step__num">3</span>
+        <div class="card card--pad">
+          <h3 class="step__title">Excedente sobre el 110 %</h3>
+          <p class="step__text">De aquí sale el excedente: lo que su consumo facturado pasa del límite. Si no supera el límite, el excedente es 0 y no hay ajuste.</p>
+          <div class="formula mono"><span data-b="consumoHero">—</span> − <span data-b="lim">—</span> = <b data-b="exc">—</b></div>
+        </div>
+      </li>
+      <li class="step" data-reveal>
+        <span class="step__num">4</span>
+        <div class="card card--pad">
+          <h3 class="step__title">Ajuste adicional</h3>
+          <p class="step__text">El excedente por encima del límite, multiplicado por la diferencia tarifaria.</p>
+          <div class="formula mono"><span data-b="exc">—</span> × <span data-b="dif">—</span> = <b data-b="cobro">—</b></div>
+        </div>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- ===================== SUBSIDIO Y CONTRIBUCIÓN ===================== -->
+<section class="section section--alt" id="tarifas">
+  <div class="wrap">
+    <div class="section__head" data-reveal>
+      <p class="eyebrow">03 · Subsidio y contribución</p>
+      <h2 class="h2">Quién recibe subsidio y quién aporta contribución.</h2>
+      <p class="lead">El programa fija tres factores: <b class="mono">1,30</b> para los estratos con subsidio, <b class="mono">1,50</b> para el estrato 4 y los estratos 5 y 6, y <b class="mono">1,70</b> para el uso comercial e industrial. El factor se aplica solo al consumo que supera el 110 % de la meta del ciclo. En los estratos <b>1, 2 y 3</b> se aplica sobre la <b>tarifa después del subsidio</b>; en contribución, sobre la tarifa regulada. A los <b>estratos 5 y 6, comerciales e industriales</b> se les suma además el <b>20 % sobre ese cobro adicional</b> para obtener la <b>penalización final</b>.</p>
+    </div>
+
+    <div class="tarifas">
+      <article class="tarifa tarifa--subsidio" data-reveal>
+        <span class="tarifa__badge">Caso 1 · Subsidio</span>
+        <h3 class="tarifa__title">Estratos 1, 2 y 3</h3>
+        <p class="tarifa__factor mono">1,30 <span>· 30 % adicional</span></p>
+        <p class="tarifa__text">Usuarios residenciales de menores ingresos. Primero se descuenta el <b>subsidio</b> de la tarifa y luego se aplica el <b>30 % adicional</b> sobre la tarifa resultante (después del subsidio), solo por el excedente.</p>
+
+      </article>
+
+      <article class="tarifa tarifa--contribucion" data-reveal>
+        <span class="tarifa__badge">Caso 2 · Contribución · estratos 5 y 6</span>
+        <h3 class="tarifa__title">Estratos 5 y 6</h3>
+        <p class="tarifa__factor mono">1,50 <span>· 50 % adicional</span></p>
+        <p class="tarifa__text">Usuarios residenciales de mayores ingresos. Sobre el excedente se aplica un <b>50 % adicional</b> de la tarifa regulada, el mismo factor del estrato 4. Después se suma el <b>20 % sobre ese cobro adicional</b>.</p>
+      
+      </article>
+
+      <article class="tarifa tarifa--contribucion" data-reveal>
+        <span class="tarifa__badge">Caso 2 · Contribución · no residencial</span>
+        <h3 class="tarifa__title">Comercial e Industrial</h3>
+        <p class="tarifa__factor mono">1,70 <span>· 70 % adicional</span></p>
+        <p class="tarifa__text">Usos no residenciales. Sobre el excedente se aplica un <b>70 % adicional</b> de la tarifa regulada. Después se suma el <b>20 % sobre ese cobro adicional</b>.</p>
+        
+      </article>
+    </div>
+
+    <div class="liquidacion" data-reveal>
+      <div class="liquidacion__head">
+        <span class="solidaridad__badge solidaridad__badge--sub">Caso 1 · Subsidio · así se liquida</span>
+        <h3 class="solidaridad__title">El 30 % se aplica sobre la tarifa después del subsidio</h3>
+        <p class="solidaridad__text">El subsidio se descuenta <b>primero</b>, en <span class="mono">$/kWh</span>. El porcentaje adicional se calcula sobre lo que queda, nunca sobre la tarifa regulada completa. Ejemplo con una factura real:</p>
+      </div>
+
+      <div class="pasos">
+        <div class="paso">
+          <span class="paso__num">1</span>
+          <div class="paso__body">
+            <p class="paso__title">Tarifa después del subsidio</p>
+            <p class="paso__formula mono">873,6862 − 182,1255 = <b>691,5607 $/kWh</b></p>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso__num">2</span>
+          <div class="paso__body">
+            <p class="paso__title">Adicional por kWh · 30 % sobre la tarifa neta</p>
+            <p class="paso__formula mono">691,5607 × 0,30 = <b>207,46821 $/kWh</b></p>
+          </div>
+        </div>
+        <div class="paso">
+          <span class="paso__num">3</span>
+          <div class="paso__body">
+            <p class="paso__title">Aporte adicional sobre el excedente</p>
+            <p class="paso__formula mono">231,12 kWh × 207,46821 = <b>$ 47.950,05</b></p>
+          </div>
+        </div>
+      </div>
+
+      <p class="paso__nota paso__nota--warn"><i data-lucide="alert-triangle"></i><b>Control clave:</b> utilice el <b>30 % adicional —0,30—</b>, no el factor completo <b>1,30</b>. En la calculadora basta con escribir la tarifa regulada y el subsidio que aparecen en la factura: la aplicación hace el descuento antes de liquidar el porcentaje.</p>
+    </div>
+
+    <div class="solidaridad" data-reveal>
+      <div class="solidaridad__copy">
+        <span class="solidaridad__badge">Caso 2 · contribución · así se liquida</span>
+        <h3 class="solidaridad__title">El 20 % se aplica sobre la penalización</h3>
+        <p class="solidaridad__text">Los <b>estratos 5 y 6</b> pagan el <b>50 % adicional</b> (factor <span class="mono">1,50</span>, el mismo del estrato 4) y el <b>comercial</b> y el <b>industrial</b>, el <b>70 % adicional</b> (factor <span class="mono">1,70</span>). Ese porcentaje se aplica solo al excedente que supera el 110 % y, sobre el <b>cobro adicional</b> resultante, se suma el <b>20 %</b>. El 20 % no se calcula sobre el valor total del consumo.</p>
+        <p class="solidaridad__text solidaridad__text--warn"><b>No se confunde el factor con el 20 %:</b> el factor (1,50 para 5 y 6; 1,70 para comercial e industrial) produce el cobro adicional. El 20 % se aplica después, sobre ese cobro. El resultado es la <b>penalización final</b>, equivalente a multiplicar el cobro adicional por <span class="mono">1,20</span>.</p>
+        <p class="solidaridad__text">Los estratos <b>1, 2 y 3</b> y el <b>estrato 4</b> no pagan este 20 %. Si el consumo no supera el límite, no hay cobro adicional y la penalización final es <b>$ 0</b>.</p>
+      </div>
+      <div class="solidaridad__card">
+        <p class="solidaridad__card-title">Ejercicio 2 del material · comercial e industrial</p>
+        <div class="solidaridad__row"><span>Excedente sobre el 110 %</span><span class="mono">168,00 kWh</span></div>
+        <div class="solidaridad__row"><span>Tarifa regulada</span><span class="mono">$ 800,00/kWh</span></div>
+        <div class="solidaridad__row"><span>Factor · porcentaje adicional</span><span class="mono">1,70 · 70 %</span></div>
+        <div class="solidaridad__row"><span>Cobro adicional</span><span class="mono">$ 94.080,00</span></div>
+        <div class="solidaridad__row"><span>Contribución del 20 %</span><span class="mono">$ 18.816,00</span></div>
+        <div class="solidaridad__total"><span>Penalización final</span><span class="mono">$ 112.896,00</span></div>
+        <p class="solidaridad__note">Con el factor 1,50 de los estratos 5 y 6, el mismo ejercicio da: 168 × 800 × 0,50 = <b>$ 67.200,00</b>; 20 % = <b>$ 13.440,00</b>; penalización final = <b>$ 80.640,00</b>.</p>
+      </div>
+    </div>
+
+    <div class="callout" data-reveal>
+      <span class="callout__icon"><i data-lucide="info"></i></span>
+      <div>
+        <p class="callout__title">Sobre el estrato 4</p>
+        <p>La presentación del programa no clasifica el estrato 4 como subsidio ni como contribución. La calculadora conserva para ese estrato el factor <b class="mono">1,50</b> que ya traía y lo muestra como «sin subsidio ni contribución», para no confundirlo con los dos casos del programa.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== PERFILES ===================== -->
+<section class="section" id="usuarios">
+  <div class="wrap">
+    <div class="section__head" data-reveal>
+      <p class="eyebrow">04 · Perfiles</p>
+      <h2 class="h2">Un factor según su tipo de usuario.</h2>
+      <p class="lead">Seleccione un perfil para aplicarlo automáticamente en la calculadora.</p>
+    </div>
+    <div class="profiles" id="typeCards"></div>
+  </div>
+</section>
+
+<!-- ===================== PIE ===================== -->
+<footer class="footer">
+  <div class="wrap footer__inner">
+    <div class="brand">
+      <span class="brandmark" role="img" aria-label="ISES"></span>
+      <span class="brand__name">ISES</span>
+      <span class="brand__divider" aria-hidden="true"></span>
+      <span class="brand__sub">Central de Escritos</span>
+    </div>
+    <p class="footer__legal">Herramienta informativa para estimar el ajuste adicional de su factura.</p>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- ===================== MODAL: TARIFAS DE REFERENCIA FLOTANTE ===================== -->
+<div class="modal-overlay" id="modalTarifas" role="dialog" aria-modal="true" aria-label="Metas de referencia" aria-hidden="true">
+  <div class="modal-backdrop" data-cerrar-modal></div>
+  <div class="modal-panel" role="document">
+    <div class="modal-body">
+      <div class="tarifas-grid">
+        <table class="tarifas-grid__table">
+        <colgroup>
+          <col><col><col><col>
+        </colgroup>
+          <thead>
+            <tr>
+              <th scope="col">Tarifa</th>
+              <th scope="col">R</th>
+              <th scope="col">U</th>
+              <th scope="col">Total general</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Alcantarillado</td><td><button type="button" class="tarifa-cell tarifa-cell--no" disabled>NO</button></td><td><button type="button" class="tarifa-cell" data-valor="246,98" data-tarifa="Alcantarillado · U">246,98</button></td><td><button type="button" class="tarifa-cell" data-valor="246,98" data-tarifa="Alcantarillado · Total general">246,98</button></td></tr>
+            <tr><td>Acueducto</td><td><button type="button" class="tarifa-cell tarifa-cell--no" disabled>NO</button></td><td><button type="button" class="tarifa-cell" data-valor="246,98" data-tarifa="Acueducto · U">246,98</button></td><td><button type="button" class="tarifa-cell" data-valor="246,98" data-tarifa="Acueducto · Total general">246,98</button></td></tr>
+            <tr><td>Comercial</td><td><button type="button" class="tarifa-cell" data-valor="13,06" data-tarifa="Comercial · R">13,06</button></td><td><button type="button" class="tarifa-cell" data-valor="17,83" data-tarifa="Comercial · U">17,83</button></td><td><button type="button" class="tarifa-cell" data-valor="17,83" data-tarifa="Comercial · Total general">17,83</button></td></tr>
+            <tr><td>Estrato 1</td><td><button type="button" class="tarifa-cell" data-valor="5,77" data-tarifa="Estrato 1 · R">5,77</button></td><td><button type="button" class="tarifa-cell" data-valor="5,77" data-tarifa="Estrato 1 · U">5,77</button></td><td><button type="button" class="tarifa-cell" data-valor="5,77" data-tarifa="Estrato 1 · Total general">5,77</button></td></tr>
+            <tr><td>Estrato 2</td><td><button type="button" class="tarifa-cell" data-valor="5,77" data-tarifa="Estrato 2 · R">5,77</button></td><td><button type="button" class="tarifa-cell" data-valor="5,77" data-tarifa="Estrato 2 · U">5,77</button></td><td><button type="button" class="tarifa-cell" data-valor="5,77" data-tarifa="Estrato 2 · Total general">5,77</button></td></tr>
+            <tr><td>Estrato 3</td><td><button type="button" class="tarifa-cell" data-valor="6,2" data-tarifa="Estrato 3 · R">6,2</button></td><td><button type="button" class="tarifa-cell" data-valor="6,62" data-tarifa="Estrato 3 · U">6,62</button></td><td><button type="button" class="tarifa-cell" data-valor="6,62" data-tarifa="Estrato 3 · Total general">6,62</button></td></tr>
+            <tr><td>Estrato 4</td><td><button type="button" class="tarifa-cell" data-valor="8,45" data-tarifa="Estrato 4 · R">8,45</button></td><td><button type="button" class="tarifa-cell" data-valor="9,33" data-tarifa="Estrato 4 · U">9,33</button></td><td><button type="button" class="tarifa-cell" data-valor="9,33" data-tarifa="Estrato 4 · Total general">9,33</button></td></tr>
+            <tr><td>Estrato 5</td><td><button type="button" class="tarifa-cell" data-valor="8,24" data-tarifa="Estrato 5 · R">8,24</button></td><td><button type="button" class="tarifa-cell" data-valor="10,4" data-tarifa="Estrato 5 · U">10,4</button></td><td><button type="button" class="tarifa-cell" data-valor="10,4" data-tarifa="Estrato 5 · Total general">10,4</button></td></tr>
+            <tr><td>Estrato 6</td><td><button type="button" class="tarifa-cell" data-valor="9,4" data-tarifa="Estrato 6 · R">9,4</button></td><td><button type="button" class="tarifa-cell" data-valor="12,49" data-tarifa="Estrato 6 · U">12,49</button></td><td><button type="button" class="tarifa-cell" data-valor="12,49" data-tarifa="Estrato 6 · Total general">12,49</button></td></tr>
+            <tr><td>Industrial</td><td><button type="button" class="tarifa-cell" data-valor="122,78" data-tarifa="Industrial · R">122,78</button></td><td><button type="button" class="tarifa-cell" data-valor="126,98" data-tarifa="Industrial · U">126,98</button></td><td><button type="button" class="tarifa-cell" data-valor="126,98" data-tarifa="Industrial · Total general">126,98</button></td></tr>
+            <tr class="total"><td>Total general</td><td><button type="button" class="tarifa-cell" data-valor="122,78" data-tarifa="Total general · R">122,78</button></td><td><button type="button" class="tarifa-cell" data-valor="246,98" data-tarifa="Total general · U">246,98</button></td><td><button type="button" class="tarifa-cell" data-valor="246,98" data-tarifa="Total general · Total general">246,98</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<script src="js/calculo.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

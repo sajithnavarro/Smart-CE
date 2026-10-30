@@ -1,0 +1,22 @@
+# Sistema operativo
+Thumbs.db
+Desktop.ini
+desktop.ini
+$RECYCLE.BIN/
+
+# Editor / herramientas
+.vscode/
+.idea/
+*.swp
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Pruebas / cobertura
+.nyc_output/
+coverage/
+
+# Temporales
+~$*
+*.tmp
