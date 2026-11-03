@@ -251,6 +251,19 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .btn--sm { height: 38px; padding: 0 14px; font-size: 13.5px; border-radius: var(--r-xs); }
 .btn--sm svg { width: 15px; height: 15px; }
 .btn--icon { width: 44px; padding: 0; }
+
+/* Botón de tema: solo el icono, sin borde ni caja */
+.theme-toggle {
+  display: grid; place-items: center;
+  width: 40px; height: 40px; padding: 0;
+  background: transparent; border: none; border-radius: 50%;
+  color: var(--ink-2); cursor: pointer;
+  transition: color .18s, background-color .18s, transform .18s;
+}
+.theme-toggle svg { width: 20px; height: 20px; }
+.theme-toggle:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.theme-toggle:active { transform: translateY(0) scale(.92); }
+.theme-toggle:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 .btn--block { width: 100%; }
 .btn[disabled] { opacity: .45; pointer-events: none; }
 
