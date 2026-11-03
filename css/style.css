@@ -144,36 +144,6 @@ body {
 }
 
 img, svg, canvas { display: block; max-width: 100%; }
-
-/* Aurora de fondo ISES: orbes de luz animados detrás de todo el contenido */
-.bg-aurora {
-  position: fixed; inset: 0; z-index: -1;
-  overflow: hidden; pointer-events: none;
-}
-.bg-aurora::before,
-.bg-aurora::after {
-  content: ""; position: absolute; border-radius: 50%;
-  filter: blur(70px); opacity: .6; will-change: transform;
-}
-.bg-aurora::before {
-  width: 62vmax; height: 62vmax; top: -20vmax; right: -16vmax;
-  background: radial-gradient(circle at 32% 32%, var(--brand-3), var(--brand) 46%, transparent 72%);
-  animation: auroraDrift 26s ease-in-out infinite alternate;
-}
-.bg-aurora::after {
-  width: 52vmax; height: 52vmax; bottom: -18vmax; left: -14vmax;
-  background: radial-gradient(circle at 68% 68%, #34d399, var(--brand-2) 52%, transparent 76%);
-  animation: auroraDrift 34s ease-in-out infinite alternate-reverse;
-}
-@keyframes auroraDrift {
-  from { transform: translate3d(0, 0, 0) scale(1); }
-  to   { transform: translate3d(-7vmax, 5vmax, 0) scale(1.09); }
-}
-[data-theme="dark"] .bg-aurora::before,
-[data-theme="dark"] .bg-aurora::after { opacity: .38; }
-@media (prefers-reduced-motion: reduce) {
-  .bg-aurora::before, .bg-aurora::after { animation: none; }
-}
 .lucide { width: 18px; height: 18px; }
 a { color: inherit; text-decoration: none; }
 button { font: inherit; color: inherit; }
@@ -217,7 +187,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 }
 
 .section { padding-block: 96px; }
-.section--alt { background: color-mix(in srgb, var(--bg-2) 88%, transparent); }
+.section--alt { background: var(--bg-2); }
 .section__head { max-width: 660px; }
 .section__head .h2 { margin-top: 14px; }
 .section__head .lead { margin-top: 16px; }
@@ -856,7 +826,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
    19. Impresión
    ------------------------------------------------------------------------- */
 @media print {
-  .nav, .nav__panel, .btn, .toast, .no-print, .hero__glow, .hero::before, .bg-aurora { display: none !important; }
+  .nav, .nav__panel, .btn, .toast, .no-print, .hero__glow, .hero::before { display: none !important; }
   body { background: #fff; }
   .section, .hero { padding-block: 8px; }
   .card, .result, .panel { box-shadow: none !important; }
