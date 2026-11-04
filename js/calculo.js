@@ -304,9 +304,6 @@ function barra(tipo, iconName, label, valor, pct) {
     '<div class="bar__track"><div class="bar__fill" data-w="' + pct + '"></div></div>' +
     '</div>';
 }
-function lineaPanel(etiqueta, valor) {
-  return '<div class="panel__row"><span>' + etiqueta + '</span><span>' + valor + '</span></div>';
-}
 
 function setTextoDataB(clave, texto) {
   document.querySelectorAll('[data-b="' + clave + '"]').forEach(function (n) { n.textContent = texto; });
@@ -528,39 +525,6 @@ function pintarResultados(d) {
     requestAnimationFrame(function () {
       barras.querySelectorAll('.bar__fill').forEach(function (f) { f.style.width = f.dataset.w + '%'; });
     });
-  }
-
-  /* Resumen */
-  const resumen = el('resumenFinal');
-  if (resumen) {
-    let h = '';
-    h += lineaPanel('Meta diaria', fmtKwh(d.metaDiaria) + ' kWh/día');
-    h += lineaPanel('Días facturados', String(d.dias));
-    h += lineaPanel('Meta del ciclo', fmtKwh(r.metaCiclo) + ' kWh');
-    h += lineaPanel('Límite 110 %', fmtKwh(r.limite110) + ' kWh');
-    h += lineaPanel('Consumo facturado', fmtKwh(d.consumo) + ' kWh');
-    h += lineaPanel('Excedente sobre el 110 %', fmtKwh(r.excedente) + ' kWh');
-    h += lineaPanel('Tipo de usuario', d.tipo.nombre);
-    h += lineaPanel('Clasificación', d.tipo.claseNombre);
-    h += lineaPanel('Factor', numFactor(factor));
-    h += lineaPanel('Porcentaje adicional', fmtPct(d.tipo.porcentaje));
-    h += lineaPanel('Tarifa regulada', fmtPesoPreciso(d.tarifa) + '/kWh');
-    if (r.subsidioKwh > 0) {
-      h += lineaPanel('Subsidio por kWh', '− ' + fmtPesoPreciso(r.subsidioKwh) + '/kWh');
-      h += lineaPanel('Tarifa después del subsidio', fmtPesoPreciso(r.tarifaNeta) + '/kWh');
-    }
-    if (r.hayExcedente) {
-      h += lineaPanel('Adicional por kWh', fmtPesoPreciso(r.diferenciaTarif) + '/kWh');
-      h += lineaPanel('Tarifa resultante', fmtPesoPreciso(r.tarifaResultante) + '/kWh');
-    }
-    if (sol.aplica) {
-      h += lineaPanel('Cobro adicional (penalización)', fmtPesoDecimal(aporte));
-      h += lineaPanel('Contribución del ' + fmtPct(sol.tasa) + ' sobre la penalización', fmtPesoDecimal(sol.monto));
-      h += '<div class="panel__total"><span>PENALIZACIÓN FINAL</span><span>' + fmtPesoDecimal(penalizacionFinal) + '</span></div>';
-    } else {
-      h += '<div class="panel__total"><span>' + etiquetaAporte(d.tipo.clase, false).toUpperCase() + '</span><span>' + fmtPesoDecimal(aporte) + '</span></div>';
-    }
-    resumen.innerHTML = h;
   }
 
   /* Liquidación paso a paso */
